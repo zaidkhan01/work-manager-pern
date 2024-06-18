@@ -1,0 +1,69 @@
+version: '3'
+
+services: 
+
+  back-end:
+    build: 
+      context: ./todo-backend
+    container_name: back-end
+    # working_dir: /usr/src/app
+    networks: 
+      - node-network
+    volumes: 
+      - ./node:/usr/src/app
+      - /usr/src/app/node_modules
+    tty: true
+    ports: 
+      - "5000:5000"
+    command: npm run start
+    depends_on:
+       - db
+
+  front-end:
+    build: 
+      context: ./react-app-vite
+    container_name: front-end
+    # working_dir: /usr/src/app
+    networks: 
+      - node-network
+    # env_file:
+    #   - .env
+    volumes: 
+      - ./react:/usr/src/app
+      - /usr/src/app/node_modules
+    tty: true
+    ports: 
+      - "4000:4000"
+    command: npm run dev
+
+  db:
+    image: postgres
+    container_name: postgres
+    restart: always
+    tty: true
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    environment: 
+      - POSTGRES_PASSWORD=postgres
+    ports: 
+      - "5433:5432"
+    networks: 
+      - node-network
+
+  nginx:
+    build: 
+      context: nginx
+    container_name: nginx
+    restart: always
+    tty: true
+    ports: 
+      - "8000:80"
+    networks: 
+      - node-network
+    depends_on:
+       - back-end
+       - front-end
+  
+networks: 
+  node-network:
+    driver: bridge
